@@ -1,5 +1,5 @@
 {
-  "name": "whatsapp-clone-firebase-styled-components-nextjs",
+  "name": "whatsapp-clone-nextjs",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,8 +8,12 @@
     "start": "next start"
   },
   "dependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
+    "firebase": "^8.3.1",
     "next": "10.0.9",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "styled-components": "^5.2.1"
   }
 }
