@@ -1,35 +1,86 @@
 import { Avatar, Button, IconButton } from '@material-ui/core'
-import { MoreVert, Chat, Search } from '@material-ui/icons'
+import {
+  MoreVert as MoreVertIcon,
+  Chat as ChatIcon,
+  Search as SearchIcon,
+} from '@material-ui/icons'
 import styled from 'styled-components'
+import { useAuthState } from 'react-firebase-hooks/auth'
+import { useCollection } from 'react-firebase-hooks/firestore'
+import { isEmail } from 'validator'
+import { auth, db } from '../config/firebase'
+import ChatLink from './ChatLink'
 
 export default function Sidebar() {
+  const [user] = useAuthState(auth)
+  const userChatRef = db
+    .collection('chats')
+    .where('users', 'array-contains', user?.email)
+  const [chatsSnapshot] = useCollection(userChatRef)
+
+  const createChat = () => {
+    const input = prompt(
+      'Please enter an email address for the user you wish to chat with'
+    )
+
+    if (!input) return
+    if (isEmail(input) && !chatAlreadyExists(input) && input !== user.email) {
+      // TODO: add the chat into the DB 'chats' collection
+      db.collection('chats').add({
+        users: [user.email, input],
+      })
+    }
+  }
+
+  const chatAlreadyExists = recipientEmail =>
+    !!chatsSnapshot?.docs.find(chat =>
+      chat.data().users.includes(recipientEmail)
+    )
+
   return (
     <Container>
       <Header>
-        <UserAvatar />
+        <UserAvatar src={user?.photoURL} onClick={() => auth.signOut()} />
         <IconsContainer>
           <IconButton>
-            <Chat />
+            <ChatIcon />
           </IconButton>
           <IconButton>
-            <MoreVert />
+            <MoreVertIcon />
           </IconButton>
         </IconsContainer>
       </Header>
 
       <SearchContainer>
-        <Search />
+        <SearchIcon />
         <SearchInput placeholder="Search in chats" />
       </SearchContainer>
 
-      <SidebarButton>Start a new chat</SidebarButton>
+      <SidebarButton onClick={createChat}>Start a new chat</SidebarButton>
 
       {/* List of chats */}
+      {chatsSnapshot?.docs.map(chat => (
+        <ChatLink key={chat.id} id={chat.id} users={chat.data().users} />
+      ))}
     </Container>
   )
 }
 
-const Container = styled.div``
+const Container = styled.nav`
+  flex: 0.45;
+  border-right: 2px solid whitesmoke;
+  height: 98vh;
+  min-width: 18.5rem;
+  max-width: 22rem;
+  overflow-y: scroll;
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+`
 
 const Header = styled.header`
   display: flex;
@@ -41,7 +92,7 @@ const Header = styled.header`
   align-items: center;
   padding: 1rem;
   height: 5rem;
-  box-shadow: 0 2px whitesmoke;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 `
 
 const UserAvatar = styled(Avatar)`
