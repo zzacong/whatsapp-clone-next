@@ -10,7 +10,7 @@ import {
 } from '@material-ui/icons'
 import TimeAgo from 'react-timeago'
 import Message from './Message'
-import { auth, db, timestamp as fireTimestamp } from '../config/firebase'
+import { auth, firestore, serverTimestamp } from '../config/firebase'
 import { useAuthState } from 'react-firebase-hooks/auth'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { getRecipientEmail } from '../lib/utils'
@@ -22,17 +22,18 @@ export default function ChatScreen({ chat, messages }) {
   const [user] = useAuthState(auth)
   const recipientEmail = getRecipientEmail(chat.users, user)
 
-  const [messagesSnapshot] = useCollection(
-    db
-      .collection('chats')
-      .doc(router.query.id)
-      .collection('messages')
-      .orderBy('timestamp', 'asc')
-  )
+  const msgRef = firestore
+    .collection('chats')
+    .doc(router.query.id)
+    .collection('messages')
+    .orderBy('timestamp', 'asc')
 
-  const [recipientSnapshot] = useCollection(
-    db.collection('users').where('email', '==', recipientEmail)
-  )
+  const userRef = firestore
+    .collection('users')
+    .where('email', '==', recipientEmail)
+
+  const [messagesSnapshot] = useCollection(msgRef)
+  const [recipientSnapshot] = useCollection(userRef)
 
   const recipient = recipientSnapshot?.docs?.[0]?.data()
 
@@ -58,16 +59,21 @@ export default function ChatScreen({ chat, messages }) {
   const sendMessage = e => {
     e.preventDefault()
     if (input) {
-      db.collection('users')
+      firestore
+        .collection('users')
         .doc(user.uid)
-        .set({ lastSeen: fireTimestamp() }, { merge: true })
+        .set({ lastSeen: serverTimestamp() }, { merge: true })
 
-      db.collection('chats').doc(router.query.id).collection('messages').add({
-        timestamp: fireTimestamp(),
-        message: input,
-        user: user.email,
-        photoURL: user.photoURL,
-      })
+      firestore
+        .collection('chats')
+        .doc(router.query.id)
+        .collection('messages')
+        .add({
+          timestamp: serverTimestamp(),
+          message: input,
+          user: user.email,
+          photoURL: user.photoURL,
+        })
 
       setInput('')
       scrollToBottom()

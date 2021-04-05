@@ -8,12 +8,12 @@ import styled from 'styled-components'
 import { useAuthState } from 'react-firebase-hooks/auth'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { isEmail } from 'validator'
-import { auth, db } from '../config/firebase'
+import { auth, firestore } from '../config/firebase'
 import ChatLink from './ChatLink'
 
 export default function Sidebar() {
   const [user] = useAuthState(auth)
-  const userChatRef = db
+  const userChatRef = firestore
     .collection('chats')
     .where('users', 'array-contains', user?.email)
   const [chatsSnapshot] = useCollection(userChatRef)
@@ -26,7 +26,7 @@ export default function Sidebar() {
     if (!input) return
     if (isEmail(input) && !chatAlreadyExists(input) && input !== user.email) {
       // TODO: add the chat into the DB 'chats' collection
-      db.collection('chats').add({
+      firestore.collection('chats').add({
         users: [user.email, input],
       })
     }

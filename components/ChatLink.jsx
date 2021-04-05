@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { Avatar } from '@material-ui/core'
 import { getRecipientEmail } from '../lib/utils'
 import { useAuthState } from 'react-firebase-hooks/auth'
-import { auth, db } from '../config/firebase'
+import { auth, firestore } from '../config/firebase'
 import { useCollection } from 'react-firebase-hooks/firestore'
 
 export default function Chat({ id, users }) {
@@ -11,7 +11,7 @@ export default function Chat({ id, users }) {
   const [user] = useAuthState(auth)
   const recipientEmail = getRecipientEmail(users, user)
   const [recipientSnapshot] = useCollection(
-    db.collection('users').where('email', '==', recipientEmail)
+    firestore.collection('users').where('email', '==', recipientEmail)
   )
 
   const enterChat = () => {
