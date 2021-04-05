@@ -11,13 +11,18 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-const app = !firebase.apps.length
-  ? firebase.initializeApp(firebaseConfig)
-  : firebase.app()
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig)
+}
 
-const auth = app.auth()
-const db = app.firestore()
+const auth = firebase.auth()
+const firestore = firebase.firestore()
 const googleProvider = new firebase.auth.GoogleAuthProvider()
-const timestamp = firebase.firestore.FieldValue.serverTimestamp
+const { serverTimestamp } = firebase.firestore.FieldValue
 
-export { auth, db, googleProvider, timestamp }
+if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+  auth.useEmulator('http://localhost:9099')
+  firestore.useEmulator('localhost', 8080)
+}
+
+export { auth, firestore, googleProvider, serverTimestamp }
